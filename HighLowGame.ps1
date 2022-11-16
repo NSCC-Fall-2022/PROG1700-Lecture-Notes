@@ -1,9 +1,8 @@
 # High Low Game
-$WonGame = $false
 
 # The computer will start by generating a random number between 1 - 10
-function New-Answer {
-    Return Get-Random -Minimum 1 -Maximum 10
+function New-Answer ($Level) {
+    Return Get-Random -Minimum 1 -Maximum ([Math]::Pow(10, $Level))
 }
 
 # The user will now have a chance to guess the number
@@ -16,23 +15,20 @@ function Get-UserGuess {
 function Test-Guess ($Guess, $Answer) {
     if ($Guess -gt $Answer) {
         Write-Host "Too High"
+        Return $false
     } elseif ($Guess -lt $Answer) {
         Write-Host "Too Low"
-    } else {
-        Write-Host "YOU GUESSED IT!"
-        $script:WonGame = $true
-    }
+        Return $false
+    } 
+    Return $true
 }
 
-function End-Play ($Answer) {
-    # The user then gets another chance to guess
-    if (-not $WonGame) {
-        $Guess = Get-UserGuess
-        Test-Guess $Guess $Answer
-    }
-
+function End-Play ($WonGame) {
+ 
     # If incorrect a second time, they lose the game
-    if (-not $WonGame) {
+    if ($WonGame) {
+        Write-Host "YEAH! YOU WIN!"
+    } else {
         Write-Host "Sorry, you didn't guess the number."
     }
 }
@@ -43,11 +39,28 @@ function End-Play ($Answer) {
 $DebugPreference = "Continue"
 
 function Start-Game {
-    $Answer = New-Answer
-    Write-Debug $Answer
-    $Guess = Get-UserGuess
-    Test-Guess $Guess $Answer
-    End-Play $Answer
+
+    $Level = 1
+
+    do {
+        # generate random number
+        $Answer = New-Answer
+        Write-Debug $Answer
+
+        # allow the user to guess
+        $WonGame = $false
+        for ($i = 0; $i -lt 2 -and -not $WonGame; $i++) {
+            $Guess = Get-UserGuess
+            $WonGame = Test-Guess $Guess $Answer
+        }
+
+        # display win or lose
+        End-Play $WonGame
+
+        # increase difficulty
+        $Level++
+
+    } while ($WonGame)
 }
 
 Start-Game
